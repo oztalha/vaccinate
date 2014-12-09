@@ -17,6 +17,7 @@ public class SN extends SimState {
 
 	private static final long serialVersionUID = 1L;
 	public Network net;
+	SimpleGraph<Agent, DefaultEdge> g;
 	public int n = 100; //number of agents
 	
 	public SN(long seed) {super(seed);}
@@ -25,7 +26,7 @@ public class SN extends SimState {
 		//create undirected network field
 		net = new Network(false);
 		//create a scale-free network using jgrapht
-		SimpleGraph<Agent, DefaultEdge> g = getGraph();
+		g = getGraph();
 		//populate nodes of mason network by referencing Agents in jgraph network 
 	    for (Agent a : g.vertexSet()){
 	    	schedule.scheduleRepeating(a);
@@ -34,17 +35,7 @@ public class SN extends SimState {
 	    //populate edges in the mason network
 	    for (DefaultEdge e : g.edgeSet())
 	    	net.addEdge(g.getEdgeSource(e), g.getEdgeTarget(e), null);
-
-	    //save network as graphml file to be read for Gephi
-	    GraphMLExporter<Agent, DefaultEdge> exporter = new GraphMLExporter<Agent, DefaultEdge>();
-	    FileWriter w;
-		try {
-			w = new FileWriter("test.graphml");
-			exporter.export(w, g);
-			w.close();
-		} catch (Exception e) {
-			printlnSynchronized(e.getMessage());
-		}
+		
 	}
 	
 	private SimpleGraph<Agent, DefaultEdge> getGraph() {
@@ -63,8 +54,30 @@ public class SN extends SimState {
 	}
 	
 	public static void main(String[] args) {
-		doLoop(SN.class, args);
+		SimState state = new SN(System.currentTimeMillis());
+		state.start();
+		do{
+			if (!state.schedule.step(state))
+            	break;
+			exportToGraphML(state, String.valueOf(state.schedule.getSteps()));
+		}while(state.schedule.getSteps() < 10);
+        state.finish();
 		System.exit(0);
+	}
+	
+	private static void exportToGraphML(SimState state, String filename) {
+		
+	    //save network as graphml file to be read for Gephi
+	    GraphMLExporter<Agent, DefaultEdge> exporter = new GraphMLExporter<Agent, DefaultEdge>();
+	    FileWriter w;
+		try {
+			w = new FileWriter(filename+".graphml");
+			exporter.export(w, ((SN) state).g);
+			w.close();
+		} catch (Exception e) {
+			printlnSynchronized(e.getMessage());
+		}
+		
 	}
 
 	
