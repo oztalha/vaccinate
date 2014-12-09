@@ -25,7 +25,8 @@ public class SN extends SimState {
 	public static SimpleGraph<Agent, DefaultEdge> g;
 	public int n = 100; //number of agents
 	public MersenneTwisterFast r;
-	
+	public static int numOfInfected = 0;
+	public static int numOfVaccinated = 0;
 	public SN(long seed) {super(seed);}
 	
 	public void start() {
@@ -48,6 +49,7 @@ public class SN extends SimState {
 	    Agent a = (Agent) net.allNodes.get(r.nextInt(n));
 	    //infect one randomly selected agent
 	    a.infect(this, 100.0);
+	    exportToGraphML(this, String.valueOf(0));
 	}
 	
 	public static void main(String[] args) {
@@ -57,7 +59,10 @@ public class SN extends SimState {
 			if (!state.schedule.step(state))
             	break;
 			exportToGraphML(state, String.valueOf(state.schedule.getSteps()));
+			//System.out.println(numOfInfected);
+			System.out.println(numOfVaccinated);
 		}while(state.schedule.getSteps() < 10);
+		
         state.finish();
 		System.exit(0);
 	}

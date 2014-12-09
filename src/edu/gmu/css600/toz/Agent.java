@@ -24,11 +24,29 @@ public class Agent implements Steppable{
 	@Override
 	public void step(SimState state) {
 		SN sn = (SN) state;
-		// if I am infected or recovered do nothing
-		if(color == 1 || color == 3)
+		// if I am vaccinated, infected or recovered do nothing
+		if(color > 0)
 			return;
 		// if none of my neighbors are infected do nothing
 		Edge[] edges = sn.net.getAdjacencyList(true)[getId()];
+		
+//		//Scenario 2 starts here
+//		int infectedNeighbors = 0;
+//		for (int i = 0; i < edges.length; i++) {
+//			Agent neighbor = edges[i].getFrom().equals(this) ? (Agent) edges[i].getTo() : (Agent) edges[i].getFrom();
+//			if(neighbor.isInfected())
+//				infectedNeighbors++;
+//		}
+//		// vaccination probability is the infectedNeighbors ratio
+//		if(sn.r.nextDouble() < infectedNeighbors*1.0/edges.length){
+//			SN.numOfVaccinated++;
+//			color = 1;
+//		}// Scenario 2 ends here
+		
+		if(sn.r.nextDouble() < .25){
+			SN.numOfVaccinated++;
+			color = 1;
+		}
 		for (int i = 0; i < edges.length; i++) {
 			Agent neighbor = edges[i].getFrom().equals(this) ? (Agent) edges[i].getTo() : (Agent) edges[i].getFrom();
 			if(neighbor.isInfected())
@@ -56,10 +74,13 @@ public class Agent implements Steppable{
     }
 
 	public void infect(SN sn, double d) {
-		if(color == 1 || color == 3)
+		if(color > 0)
 			return;
-		if(sn.r.nextDouble()*100 < d)
+		if(sn.r.nextDouble()*100 < d){
+			SN.numOfInfected++;
 			color = 2;
+		}
+			
 	}
 	// Get Health Status
 	public int getHS() {
