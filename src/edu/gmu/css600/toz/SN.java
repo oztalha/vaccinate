@@ -8,6 +8,7 @@ import org.jgrapht.generate.ScaleFreeGraphGenerator;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
+import ec.util.MersenneTwisterFast;
 import edu.gmu.css600.toz.Agent;
 import sim.engine.SimState;
 import sim.field.network.*;
@@ -16,11 +17,14 @@ import sim.field.network.*;
 public class SN extends SimState {
 
 	private static final long serialVersionUID = 1L;
+	public static final double INFECTRATE = 25.0;
 	public Network net;
 	SimpleGraph<Agent, DefaultEdge> g;
 	public int n = 100; //number of agents
+	public MersenneTwisterFast r;
 	
 	public SN(long seed) {super(seed);}
+	
 	public void start() {
 		super.start();
 		//create undirected network field
@@ -35,7 +39,24 @@ public class SN extends SimState {
 	    //populate edges in the mason network
 	    for (DefaultEdge e : g.edgeSet())
 	    	net.addEdge(g.getEdgeSource(e), g.getEdgeTarget(e), null);
-		
+	    
+	    //infect an agent randomly
+	    r = new MersenneTwisterFast();
+	    Agent a = (Agent) net.allNodes.get(r.nextInt(n));
+	    a.infect(this, 100.0);
+	    
+	}
+	
+	public static void main(String[] args) {
+		SimState state = new SN(System.currentTimeMillis());
+		state.start();
+		do{
+			if (!state.schedule.step(state))
+            	break;
+			exportToGraphML(state, String.valueOf(state.schedule.getSteps()));
+		}while(state.schedule.getSteps() < 10);
+        state.finish();
+		System.exit(0);
 	}
 	
 	private SimpleGraph<Agent, DefaultEdge> getGraph() {
@@ -51,18 +72,6 @@ public class SN extends SimState {
 	        }
 	      }, null);
 	    return graph;
-	}
-	
-	public static void main(String[] args) {
-		SimState state = new SN(System.currentTimeMillis());
-		state.start();
-		do{
-			if (!state.schedule.step(state))
-            	break;
-			exportToGraphML(state, String.valueOf(state.schedule.getSteps()));
-		}while(state.schedule.getSteps() < 10);
-        state.finish();
-		System.exit(0);
 	}
 	
 	private static void exportToGraphML(SimState state, String filename) {
