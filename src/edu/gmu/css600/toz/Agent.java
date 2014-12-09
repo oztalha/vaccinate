@@ -32,7 +32,7 @@ public class Agent implements Steppable{
 		for (int i = 0; i < edges.length; i++) {
 			Agent neighbor = edges[i].getFrom().equals(this) ? (Agent) edges[i].getTo() : (Agent) edges[i].getFrom();
 			if(neighbor.isInfected())
-				infect(sn, sn.INFECTRATE);
+				infect(sn, SN.INFECTRATE);
 		}
 	}
 
@@ -60,6 +60,10 @@ public class Agent implements Steppable{
 			return;
 		if(sn.r.nextDouble()*100 < d)
 			color = 2;
+	}
+	// Get Health Status
+	public int getHS() {
+		return color;
 	}
 
 }
