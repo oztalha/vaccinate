@@ -1,6 +1,9 @@
 package edu.gmu.css600.toz;
 
 import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.jgrapht.VertexFactory;
 import org.jgrapht.ext.EdgeNameProvider;
@@ -13,14 +16,14 @@ import org.jgrapht.graph.SimpleGraph;
 import ec.util.MersenneTwisterFast;
 import edu.gmu.css600.toz.Agent;
 import sim.engine.SimState;
-import sim.field.SparseField2D;
 import sim.field.network.*;
 
 
 public class SN extends SimState {
 
 	private static final long serialVersionUID = 1L;
-	public static final double INFECTRATE = 25.0;
+	public static final double INFECTRATE = .20;
+	public static double VACCINATIONRATE = .1 ;
 	public Network net;
 	public static SimpleGraph<Agent, DefaultEdge> g;
 	public int n = 100; //number of agents
@@ -31,39 +34,50 @@ public class SN extends SimState {
 	
 	public void start() {
 		super.start();
+		//random number generator
+		r = new MersenneTwisterFast();
 		//create undirected network field
 		net = new Network(false);
-		//create a scale-free network using jgrapht
+		//create a scale-free network using jgrapht with agents
 		g = getGraph();
+		//infect a randomly selected agent
+		List<Agent> asList = new ArrayList<Agent>(g.vertexSet());
+	    ((Agent) asList.get(r.nextInt(n))).infect(this, 100.0);
+	    asList = null;
+	    
 		//populate nodes of mason network by referencing Agents in jgraph network 
 	    for (Agent a : g.vertexSet()){
 	    	schedule.scheduleRepeating(a);
-	    	net.addNode(a);	
+	    	net.addNode(a);
+	    	//scenario 3 and 6
+	    	a.vaccinate(this,SN.VACCINATIONRATE);
 	    }
 	    //populate edges in the mason network
 	    for (DefaultEdge e : g.edgeSet())
 	    	net.addEdge(g.getEdgeSource(e), g.getEdgeTarget(e), null);
 	    
-	    //infect an agent randomly
-	    r = new MersenneTwisterFast();
-	    Agent a = (Agent) net.allNodes.get(r.nextInt(n));
-	    //infect one randomly selected agent
-	    a.infect(this, 100.0);
-	    exportToGraphML(this, String.valueOf(0));
+	    // exportToGraphML(this, String.valueOf(0));
 	}
 	
 	public static void main(String[] args) {
-		SimState state = new SN(System.currentTimeMillis());
-		state.start();
-		do{
-			if (!state.schedule.step(state))
-            	break;
-			exportToGraphML(state, String.valueOf(state.schedule.getSteps()));
-			//System.out.println(numOfInfected);
-			System.out.println(numOfVaccinated);
-		}while(state.schedule.getSteps() < 10);
-		
-        state.finish();
+		for(int i=0;i<100;i++){
+			SimState state = new SN(System.currentTimeMillis());
+			state.start();
+			do{
+				if (!state.schedule.step(state))
+	            	break;
+				//exportToGraphML(state, String.valueOf(state.schedule.getSteps()));
+				System.out.print(numOfInfected+",");
+				//System.out.print(numOfVaccinated+",");
+				if(state.schedule.getSteps() %20 == 0){
+					SN.numOfInfected = 0;
+					SN.numOfVaccinated = 0;
+					System.out.println();
+				}
+				// System.out.println(numOfVaccinated);
+			}while(state.schedule.getSteps() < 20);			
+	        state.finish();
+		}
 		System.exit(0);
 	}
 	
